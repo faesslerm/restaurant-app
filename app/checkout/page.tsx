@@ -1,56 +1,60 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { ArrowLeft, CreditCard, Users } from "lucide-react"
-import { useActiveOrder } from "@/hooks/use-active-order"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { processPayment } from "./actions"
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { ArrowLeft, CreditCard, Users } from "lucide-react";
+import { useActiveOrder } from "@/hooks/use-active-order";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { processPayment } from "./actions";
 
 export default function CheckoutPage() {
-  const router = useRouter()
-  const { orderItems, getOrderTotal, clearOrder, tableNumber } = useActiveOrder()
-  const [isClient, setIsClient] = useState(false)
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [splitBill, setSplitBill] = useState(false)
-  const [numberOfPeople, setNumberOfPeople] = useState(2)
+  const router = useRouter();
+  const { orderItems, getOrderTotal, clearOrder, tableNumber } =
+    useActiveOrder();
+  const [isClient, setIsClient] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [splitBill, setSplitBill] = useState(false);
+  const [numberOfPeople, setNumberOfPeople] = useState(2);
 
-  const totalAmount = getOrderTotal()
-  const amountPerPerson = splitBill ? totalAmount / numberOfPeople : totalAmount
+  const totalAmount = getOrderTotal();
+  const amountPerPerson = splitBill
+    ? totalAmount / numberOfPeople
+    : totalAmount;
 
   // Check if user is authenticated and has items
   useEffect(() => {
-    setIsClient(true)
-    const authCode = localStorage.getItem("authCode")
+    setIsClient(true);
+    const authCode = localStorage.getItem("authCode");
     if (!authCode) {
-      router.push("/auth")
+      router.push("/auth");
     }
-  }, [router])
-
-  useEffect(() => {
-    if (isClient && orderItems.length === 0) {
-      router.push("/menu")
-    }
-  }, [isClient, orderItems, router])
+  }, [router]);
 
   if (!isClient) {
-    return null // Prevent hydration mismatch
+    return null; // Prevent hydration mismatch
   }
 
   const handlePayment = async () => {
-    setIsProcessing(true)
+    setIsProcessing(true);
 
     try {
       // Store order items for receipt
-      sessionStorage.setItem("lastOrder", JSON.stringify(orderItems))
+      sessionStorage.setItem("lastOrder", JSON.stringify(orderItems));
 
       // In a real app, this would integrate with Stripe
       await processPayment({
@@ -59,7 +63,7 @@ export default function CheckoutPage() {
         numberOfPeople: splitBill ? numberOfPeople : undefined,
         items: orderItems,
         splitBill,
-      })
+      });
 
       // Store payment details for success page
       const paymentDetails = {
@@ -69,31 +73,36 @@ export default function CheckoutPage() {
         amountPerPerson: splitBill ? amountPerPerson : undefined,
         numberOfPeople: splitBill ? numberOfPeople : undefined,
         timestamp: new Date().toISOString(),
-      }
-      sessionStorage.setItem("lastPayment", JSON.stringify(paymentDetails))
+      };
+      sessionStorage.setItem("lastPayment", JSON.stringify(paymentDetails));
 
       // Clear the active order after successful payment
-      clearOrder()
-      localStorage.removeItem("orderStartTime")
+      clearOrder();
+      localStorage.removeItem("orderStartTime");
 
       // Redirect to success page
-      router.push("/checkout/success")
+      router.push("/checkout/success");
     } catch (error) {
-      console.error("Payment failed:", error)
-      setIsProcessing(false)
+      console.error("Payment failed:", error);
+      setIsProcessing(false);
     }
-  }
+  };
 
-  const handleNumberOfPeopleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Number.parseInt(e.target.value)
+  const handleNumberOfPeopleChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const value = Number.parseInt(e.target.value);
     if (value >= 2) {
-      setNumberOfPeople(value)
+      setNumberOfPeople(value);
     }
-  }
+  };
 
   return (
     <div className="container max-w-md mx-auto px-4 py-8">
-      <Link href="/bill" className="flex items-center text-sm mb-6 text-muted-foreground hover:text-foreground">
+      <Link
+        href="/bill"
+        className="flex items-center text-sm mb-6 text-muted-foreground hover:text-foreground"
+      >
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back to bill
       </Link>
@@ -101,7 +110,9 @@ export default function CheckoutPage() {
       <Card>
         <CardHeader>
           <CardTitle>Checkout</CardTitle>
-          <CardDescription>Complete your payment to finish your order</CardDescription>
+          <CardDescription>
+            Complete your payment to finish your order
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -129,7 +140,11 @@ export default function CheckoutPage() {
                 <Users className="h-5 w-5 mr-2 text-muted-foreground" />
                 <h3 className="font-medium">Split the Bill</h3>
               </div>
-              <Switch checked={splitBill} onCheckedChange={setSplitBill} aria-label="Toggle bill splitting" />
+              <Switch
+                checked={splitBill}
+                onCheckedChange={setSplitBill}
+                aria-label="Toggle bill splitting"
+              />
             </div>
 
             {splitBill && (
@@ -161,23 +176,29 @@ export default function CheckoutPage() {
               <h3 className="font-medium">Payment Method</h3>
             </div>
             <p className="text-sm text-muted-foreground mb-4">
-              In a real application, this would integrate with Stripe to securely process your payment.
+              In a real application, this would integrate with Stripe to
+              securely process your payment.
             </p>
             <p className="text-xs text-muted-foreground">
-              For this demo, clicking "Pay Now" will simulate a successful payment.
+              For this demo, clicking "Pay Now" will simulate a successful
+              payment.
             </p>
           </div>
         </CardContent>
         <CardFooter>
-          <Button className="w-full bg-amber-600 hover:bg-amber-700" onClick={handlePayment} disabled={isProcessing}>
+          <Button
+            className="w-full bg-amber-600 hover:bg-amber-700"
+            onClick={handlePayment}
+            disabled={isProcessing}
+          >
             {isProcessing
               ? "Processing..."
               : splitBill
-                ? `Pay ${amountPerPerson.toFixed(2)} per person`
-                : `Pay ${totalAmount.toFixed(2)}`}
+              ? `Pay ${amountPerPerson.toFixed(2)} per person`
+              : `Pay ${totalAmount.toFixed(2)}`}
           </Button>
         </CardFooter>
       </Card>
     </div>
-  )
+  );
 }
