@@ -1,56 +1,73 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft } from "lucide-react"
-import { verifyReservationCode } from "./actions"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ArrowLeft } from "lucide-react";
+import { verifyReservationCode } from "./actions";
 
 export default function AuthPage() {
-  const router = useRouter()
-  const [code, setCode] = useState("")
-  const [isVerifying, setIsVerifying] = useState(false)
-  const [error, setError] = useState("")
+  const router = useRouter();
+  const [code, setCode] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!code) return
+    e.preventDefault();
+    if (!code) return;
 
-    setIsVerifying(true)
-    setError("")
+    setIsVerifying(true);
+    setError("");
 
     try {
-      const result = await verifyReservationCode(code)
+      const result = await verifyReservationCode(code);
       if (result.success) {
         // In a real app, this would set a session or token
         // For demo purposes, we'll store in localStorage
-        localStorage.setItem("authCode", code)
+        localStorage.setItem("authCode", code);
+
+        const reservations = JSON.parse(
+          sessionStorage.getItem("reservations") || "[]"
+        );
+        const reservation = reservations.find((r: any) => r.code === code);
+        const tableNumber =
+          reservation?.tableNumber || Math.floor(Math.random() * 20) + 1;
 
         // Store the table number
-        if (result.tableNumber) {
-          localStorage.setItem("tableNumber", result.tableNumber)
+        if (tableNumber) {
+          localStorage.setItem("tableNumber", tableNumber);
         }
 
-        router.push("/menu") // Redirect directly to menu
+        router.push("/menu"); // Redirect directly to menu
       } else {
-        setError("Invalid reservation code. Please try again.")
+        setError("Invalid reservation code. Please try again.");
       }
     } catch (error) {
-      setError("Something went wrong. Please try again.")
+      setError("Something went wrong. Please try again.");
     } finally {
-      setIsVerifying(false)
+      setIsVerifying(false);
     }
-  }
+  };
 
   return (
     <div className="container max-w-md mx-auto px-4 py-8">
-      <Link href="/" className="flex items-center text-sm mb-6 text-muted-foreground hover:text-foreground">
+      <Link
+        href="/"
+        className="flex items-center text-sm mb-6 text-muted-foreground hover:text-foreground"
+      >
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back to home
       </Link>
@@ -58,7 +75,9 @@ export default function AuthPage() {
       <Card>
         <CardHeader>
           <CardTitle>Enter Your Code</CardTitle>
-          <CardDescription>Use the reservation code sent to your email</CardDescription>
+          <CardDescription>
+            Use the reservation code sent to your email
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -76,7 +95,11 @@ export default function AuthPage() {
               {error && <p className="text-sm text-red-500">{error}</p>}
             </div>
 
-            <Button type="submit" className="w-full bg-amber-600 hover:bg-amber-700" disabled={isVerifying || !code}>
+            <Button
+              type="submit"
+              className="w-full bg-amber-600 hover:bg-amber-700"
+              disabled={isVerifying || !code}
+            >
               {isVerifying ? "Verifying..." : "Continue"}
             </Button>
           </form>
@@ -84,12 +107,15 @@ export default function AuthPage() {
         <CardFooter className="flex justify-center">
           <p className="text-sm text-muted-foreground">
             Don't have a code?{" "}
-            <Link href="/reservation" className="text-amber-600 hover:underline">
+            <Link
+              href="/reservation"
+              className="text-amber-600 hover:underline"
+            >
               Make a reservation
             </Link>
           </p>
         </CardFooter>
       </Card>
     </div>
-  )
+  );
 }

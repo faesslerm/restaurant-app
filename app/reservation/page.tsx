@@ -1,60 +1,85 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { CalendarIcon, ArrowLeft } from "lucide-react"
-import { format } from "date-fns"
-import { cn } from "@/lib/utils"
-import { createReservation } from "./actions"
-import Link from "next/link"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { CalendarIcon, ArrowLeft } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { createReservation } from "./actions";
+import Link from "next/link";
 
 export default function ReservationPage() {
-  const router = useRouter()
-  const [date, setDate] = useState<Date | undefined>(undefined)
-  const [time, setTime] = useState<string>("")
-  const [guests, setGuests] = useState<string>("2")
-  const [name, setName] = useState<string>("")
-  const [email, setEmail] = useState<string>("")
-  const [phone, setPhone] = useState<string>("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const router = useRouter();
+  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [time, setTime] = useState<string>("");
+  const [guests, setGuests] = useState<string>("2");
+  const [name, setName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [phone, setPhone] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!date || !time || !name || !email) return
+    e.preventDefault();
+    if (!date || !time || !name || !email) return;
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
-      const formattedDate = format(date, "yyyy-MM-dd")
-      await createReservation({
+      const formattedDate = format(date, "yyyy-MM-dd");
+      const { success, reservation } = await createReservation({
         date: formattedDate,
         time,
         guests: Number.parseInt(guests),
         name,
         email,
         phone,
-      })
+      });
 
-      router.push("/reservation/confirmation")
+      const reservations = JSON.parse(
+        sessionStorage.getItem("reservations") || "[]"
+      );
+      reservations.push(reservation);
+      sessionStorage.setItem("reservations", JSON.stringify(reservations));
+
+      router.push("/reservation/confirmation");
     } catch (error) {
-      console.error("Reservation failed:", error)
+      console.error("Reservation failed:", error);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className="container max-w-md mx-auto px-4 py-8">
-      <Link href="/" className="flex items-center text-sm mb-6 text-muted-foreground hover:text-foreground">
+      <Link
+        href="/"
+        className="flex items-center text-sm mb-6 text-muted-foreground hover:text-foreground"
+      >
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back to home
       </Link>
@@ -62,7 +87,9 @@ export default function ReservationPage() {
       <Card>
         <CardHeader>
           <CardTitle>Book a Table</CardTitle>
-          <CardDescription>Fill in your details to reserve a table at our restaurant</CardDescription>
+          <CardDescription>
+            Fill in your details to reserve a table at our restaurant
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -72,7 +99,10 @@ export default function ReservationPage() {
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !date && "text-muted-foreground"
+                    )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {date ? format(date, "PPP") : "Select date"}
@@ -131,18 +161,36 @@ export default function ReservationPage() {
 
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-              <p className="text-xs text-muted-foreground">We'll send your reservation code to this email</p>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                We'll send your reservation code to this email
+              </p>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="phone">Phone Number (optional)</Label>
-              <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
+              <Input
+                id="phone"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
             </div>
 
             <Button
@@ -156,5 +204,5 @@ export default function ReservationPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
